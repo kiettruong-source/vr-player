@@ -27,11 +27,15 @@ const exitFull = () => (document.exitFullscreen || document.webkitExitFullscreen
 const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 const browserUI = {
   isFullscreen: () => isFull(),
-  toggleFullscreen: () => (isFull() ? exitFull() : goFull()),
+  toggleFullscreen: () => (isFull() ? exitFull() : canFullscreen ? goFull() : null),
 };
+export const standalone = matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+// iPadOS Safari's element full screen adds its own one-finger swipe-down and pan-down gestures that
+// exit full screen and can't be blocked by the page (WebKit WKFullScreenWindowControllerIOS), so
+// dragging to look up would throw you out. On a touch screen, full screen means the Home Screen app.
+export const touchScreen = navigator.maxTouchPoints > 1 || matchMedia('(hover: none)').matches;
 export const canFullscreen = PLATFORM === 'mac'
-  || (!!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)
-      && !matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches);
+  || (!touchScreen && !standalone && !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen));
 if (PLATFORM !== 'mac') {
   for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) {
     document.addEventListener(ev, () => receive({ event: 'fullscreen', payload: { on: isFull() } }));

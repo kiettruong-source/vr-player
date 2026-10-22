@@ -1,4 +1,4 @@
-import { PLATFORM, PAGES_URL, call, on, canFullscreen } from './platform.js';
+import { PLATFORM, PAGES_URL, call, on, canFullscreen, standalone, touchScreen } from './platform.js';
 import { Viewer } from './sphere.js';
 import { clock, limits } from './view-math.js';
 
@@ -644,6 +644,12 @@ document.addEventListener('keydown', (e) => {
 // ---------- Boot ----------
 function setupFullPlay() {
   const sw = $('#btn-fullplay');
+  if (touchScreen && !standalone && PLATFORM !== 'mac') {
+    // iPad in a Safari tab: real full screen is the Home Screen app, so explain that instead.
+    sw.removeAttribute('role');
+    sw.addEventListener('click', () => { $('#fs-note').hidden = !$('#fs-note').hidden; });
+    return;
+  }
   sw.hidden = !canFullscreen;                         // Home Screen app: always full screen already
   sw.setAttribute('aria-checked', String(prefs.fullPlay));
   sw.addEventListener('click', () => {
