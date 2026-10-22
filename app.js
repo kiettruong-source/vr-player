@@ -22,6 +22,10 @@ const state = {
   fullscreen: false,
 };
 
+// "Full screen" switch: every video opens full screen; going back leaves it. Remembered per device.
+const prefs = { fullPlay: false };
+try { prefs.fullPlay = localStorage.getItem('fullPlay') === '1'; } catch { /* no storage: default off */ }
+
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const dur = (s) => (reduced() ? 0 : s);
 
@@ -215,6 +219,7 @@ on('menu', ({ action }) => {
 });
 on('fullscreen', ({ on: isOn }) => {
   state.fullscreen = isOn;
+  if (!isOn) state.autoFull = false;
   $('#btn-full use').setAttribute('href', isOn ? '#i-unfull' : '#i-full');
   $('#btn-full').setAttribute('aria-label', isOn ? 'Exit full screen' : 'Full screen');
 });
@@ -242,6 +247,10 @@ async function play(id) {
   const r = state.rows.get(id);
   if (!r || !playable(r)) return;
   if (state.view === 'player') leave();   // opening another video while one plays
+  if (prefs.fullPlay && canFullscreen && !state.fullscreen && !state.autoFull) {
+    state.autoFull = true;
+    call('toggleFullscreen');
+  }
   const seq = ++playSeq;
   state.playing = id;
   state.failedId = id;
@@ -293,6 +302,7 @@ function start(info) {
 
 function leave() {
   if (state.view !== 'player') return;
+  if (state.autoFull) { state.autoFull = false; if (state.fullscreen) call('toggleFullscreen'); }
   if (state.playing) call('stopped', { id: state.playing });
   state.playing = null;
   gsap.killTweensOf('#library, #player');
@@ -626,12 +636,24 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (closeMenu()) return $('#btn-layout').focus();
     if (!$('#keys').hidden) { $('#keys').hidden = true; return; }
-    if (state.fullscreen) return call('toggleFullscreen');
+    if (state.fullscreen && !state.autoFull) return call('toggleFullscreen');
     leave();
   }
 });
 
 // ---------- Boot ----------
+function setupFullPlay() {
+  const sw = $('#btn-fullplay');
+  sw.hidden = !canFullscreen;                         // Home Screen app: always full screen already
+  sw.setAttribute('aria-checked', String(prefs.fullPlay));
+  sw.addEventListener('click', () => {
+    prefs.fullPlay = !prefs.fullPlay;
+    sw.setAttribute('aria-checked', String(prefs.fullPlay));
+    try { localStorage.setItem('fullPlay', prefs.fullPlay ? '1' : '0'); } catch { /* not remembered */ }
+  });
+}
+setupFullPlay();
+
 function setupPlatform() {
   const touch = matchMedia('(hover: none)').matches;
   $('.lib-hint').textContent = touch

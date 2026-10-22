@@ -269,3 +269,6 @@ body { touch-action: manipulation; }
 .bar { bottom: max(18px, env(safe-area-inset-bottom)); }
 #library { padding-top: max(72px, calc(env(safe-area-inset-top) + 40px)); }
 #btn-motion[aria-pressed="true"] { color: var(--accent); }
+#btn-fullplay[aria-checked="true"] { border-color: var(--accent); color: var(--ink); }
+#btn-fullplay[aria-checked="true"] svg { color: var(--accent); }
+#stage canvas { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
