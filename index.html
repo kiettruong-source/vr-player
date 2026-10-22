@@ -1,0 +1,169 @@
+<!doctype html>
+<!--
+THESIS  The video is the room; the interface is one quiet instrument panel that gets out of the way.
+        A 180° world has hard edges you feel (rubber band), not a badge that tells you.
+OWN-WORLD  Black field, smoked-graphite HUD panels (macOS HUD material), warm off-white ink #EDE8E0,
+        one sodium-amber accent #E9A23B for played time and focus. System type, tabular figures.
+STORY   Open → your folder's VR videos → Return → you're inside. Drag to look; the instruments fade away.
+FIRST VIEWPORT  Library: a drifting, draggable lat/long wireframe sphere behind a 560px list column.
+        Player: full-bleed sphere, transport bar bottom-centre that auto-hides. Nothing at the top.
+FORM    Native HUD instrument cluster over a full-bleed sphere (1 of 1; no seed run, brief pinned by the plan).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VR Player">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>VR Player</title>
+<link rel="stylesheet" href="app.css">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/InertiaPlugin.min.js"></script>
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
+</head>
+<body data-view="library">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-play" viewBox="0 0 20 20"><path d="M6.5 4.6v10.8a.6.6 0 0 0 .9.5l8.4-5.4a.6.6 0 0 0 0-1L7.4 4.1a.6.6 0 0 0-.9.5Z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 20 20"><rect x="5.5" y="4.5" width="3" height="11" rx=".8" fill="currentColor"/><rect x="11.5" y="4.5" width="3" height="11" rx=".8" fill="currentColor"/></symbol>
+    <symbol id="i-back" viewBox="0 0 20 20"><path d="M12 4.5 6.5 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-recenter" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="5.5"/><path d="M10 1.8v3M10 15.2v3M1.8 10h3M15.2 10h3"/></g><circle cx="10" cy="10" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.8v4.4h2.8L10 15.5v-11L6.3 7.8Z"/><path d="M13 7.4a3.6 3.6 0 0 1 0 5.2M15.2 5.3a6.6 6.6 0 0 1 0 9.4"/></g></symbol>
+    <symbol id="i-muted" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.8v4.4h2.8L10 15.5v-11L6.3 7.8Z"/><path d="m13 8 4 4M17 8l-4 4"/></g></symbol>
+    <symbol id="i-full" viewBox="0 0 20 20"><path d="M3.5 7.5v-4h4M16.5 7.5v-4h-4M3.5 12.5v4h4M16.5 12.5v4h-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-unfull" viewBox="0 0 20 20"><path d="M7.5 3.5v4h-4M12.5 3.5v4h4M7.5 16.5v-4h-4M12.5 16.5v-4h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sphere" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="6.5"/><ellipse cx="10" cy="10" rx="2.8" ry="6.5"/><path d="M3.5 10h13"/></g></symbol>
+    <symbol id="i-folder" viewBox="0 0 20 20"><path d="M2.75 6.25v8.5c0 .55.45 1 1 1h12.5c.55 0 1-.45 1-1v-7c0-.55-.45-1-1-1H9.6L8 4.75H3.75c-.55 0-1 .45-1 1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M5 2.75h6.5L15 6.25v11H5Z"/><path d="M11.25 2.75v3.75H15"/></g></symbol>
+    <symbol id="i-reveal" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4.5H5.25c-.4 0-.75.35-.75.75v9.5c0 .4.35.75.75.75h9.5c.4 0 .75-.35.75-.75V11"/><path d="M11.5 3.75h4.75V8.5M16 4 9.5 10.5"/></g></symbol>
+    <symbol id="i-download" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5v9M6 8.75 10 12.75l4-4M4 14.5v1.25c0 .4.35.75.75.75h10.5c.4 0 .75-.35.75-.75V14.5"/></g></symbol>
+    <symbol id="i-motion" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6.25" y="3.25" width="7.5" height="13.5" rx="1.5"/><path d="M3 7.5a6 6 0 0 0 0 5M17 7.5a6 6 0 0 1 0 5"/></g></symbol>
+    <symbol id="i-ipad" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="4" y="2.75" width="12" height="14.5" rx="1.75"/><path d="M8.75 14.5h2.5" stroke-linecap="round"/></g></symbol>
+    <symbol id="i-trash" viewBox="0 0 20 20"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 5.5h12.5M8 5.5V3.75h4V5.5M5.5 5.5l.7 10.2c.04.6.53 1.05 1.12 1.05h5.36c.6 0 1.08-.46 1.12-1.05l.7-10.2"/></g></symbol>
+  </defs>
+</svg>
+
+<div id="stage" aria-hidden="true"></div>
+<video id="video" playsinline preload="auto" crossorigin="anonymous" hidden></video>
+
+<!-- Library -->
+<main id="library" aria-labelledby="lib-title">
+  <header class="lib-head">
+    <div class="lib-title-group">
+      <h1 id="lib-title">Downloads</h1>
+      <p id="lib-count" class="muted" aria-live="polite">Looking for VR videos…</p>
+    </div>
+    <div class="lib-actions">
+      <button class="btn mac-only" id="btn-ipad" type="button" aria-haspopup="dialog" aria-expanded="false"><svg aria-hidden="true"><use href="#i-ipad"/></svg>iPad</button>
+      <button class="btn mac-only" id="btn-folder" type="button"><svg aria-hidden="true"><use href="#i-folder"/></svg>Change folder</button>
+      <button class="btn not-lan" id="btn-open" type="button"><svg aria-hidden="true"><use href="#i-file"/></svg>Open file…</button>
+      <a class="btn lan-only" id="btn-offline" href="#"><svg aria-hidden="true"><use href="#i-ipad"/></svg>Offline iPad app</a>
+      <a class="btn ipad-only" id="btn-maclib" href="#" hidden><svg aria-hidden="true"><use href="#i-folder"/></svg>Mac library</a>
+    </div>
+  </header>
+  <div id="ffmpeg-banner" class="banner" hidden>
+    <p><strong>Optimizing needs ffmpeg.</strong> Videos marked “Optimize first” can’t play until it’s installed. In Terminal, run <code>brew install ffmpeg</code>, then reopen VR Player.</p>
+  </div>
+  <ul id="rows" class="rows" aria-labelledby="lib-title"></ul>
+  <div id="lib-empty" class="empty" hidden>
+    <h2 id="empty-title">No VR videos in <span id="empty-folder">this folder</span></h2>
+    <p class="muted" id="empty-text">VR videos have wide 2:1 or square frames, at least 2880 pixels across. Choose another folder, or open a file directly.</p>
+    <div class="lib-actions">
+      <button class="btn mac-only" type="button" data-act="folder"><svg aria-hidden="true"><use href="#i-folder"/></svg>Change folder</button>
+      <button class="btn not-lan" type="button" data-act="open"><svg aria-hidden="true"><use href="#i-file"/></svg>Open file…</button>
+    </div>
+  </div>
+  <p class="lib-hint muted">Drag to look around · Double-click the video for controls · Return plays</p>
+</main>
+
+<!-- Mac: share the library with the iPad -->
+<div id="ipad-panel" class="ipad-panel hud mac-only" role="dialog" aria-labelledby="ipad-title" hidden>
+  <div class="panel-head">
+    <h2 id="ipad-title">Watch on your iPad</h2>
+    <button class="icon" type="button" id="btn-ipad-close" aria-label="Close"><svg><use href="#i-back"/></svg></button>
+  </div>
+  <button class="switch" type="button" role="switch" id="share-switch" aria-checked="false">
+    <span class="switch-text"><strong>Share this library on Wi-Fi</strong><span class="muted">Only someone with the link below can open it.</span></span>
+    <span class="switch-track" aria-hidden="true"><span></span></span>
+  </button>
+  <div id="share-on" hidden>
+    <img id="share-qr" alt="QR code for the iPad link" width="148" height="148">
+    <ol class="steps">
+      <li>On the iPad, point the Camera at this code and open the link.</li>
+      <li>In Safari, tap Share › <strong>Add to Home Screen</strong>.</li>
+      <li>For videos stored on the iPad, tap <strong>Offline iPad app</strong> in that library.</li>
+    </ol>
+    <p class="share-url"><span id="share-url"></span><br><span class="muted" id="share-ip"></span></p>
+    <p class="muted share-note">Keep this Mac awake and VR Player open while you watch.</p>
+    <button class="btn" type="button" id="btn-new-link">New link</button>
+  </div>
+  <p id="share-wait" class="muted" hidden>Starting…</p>
+</div>
+
+<!-- Player -->
+<section id="player" aria-label="Player" hidden>
+  <div id="center" class="center" aria-live="polite">
+    <div id="prep" class="prep" hidden>
+      <h2 id="prep-title">Preparing your video</h2>
+      <p id="prep-text" class="muted">Making a copy this Mac can play smoothly. It starts in a few seconds and keeps converting while you watch.</p>
+      <div class="prep-line" aria-hidden="true"><span></span></div>
+      <div class="prep-actions" hidden>
+        <button class="btn" type="button" id="btn-share-mac" hidden>Convert on Mac</button>
+        <button class="btn" type="button" id="btn-try" hidden>Try anyway</button>
+        <button class="btn" type="button" id="btn-retry">Try again</button>
+        <button class="btn" type="button" id="btn-prep-back">Back to library</button>
+      </div>
+    </div>
+    <div id="flash" class="flash" aria-hidden="true"><svg><use href="#i-play"/></svg></div>
+    <p id="buffering" class="buffering muted" hidden>Buffering…</p>
+  </div>
+
+  <div id="bar" class="bar hud" role="toolbar" aria-label="Playback">
+    <div class="bar-row">
+      <button class="icon" id="btn-back" type="button" aria-label="Back to library" title="Library (Esc)"><svg><use href="#i-back"/></svg></button>
+      <button class="icon icon-lg" id="btn-play" type="button" aria-label="Play" title="Play (Space)"><svg><use href="#i-play"/></svg></button>
+      <span id="t-now" class="time">0:00</span>
+      <div class="scrub" id="scrub">
+        <div class="scrub-track" aria-hidden="true">
+          <div class="scrub-ready" id="scrub-ready"></div>
+          <div class="scrub-played" id="scrub-played"></div>
+        </div>
+        <input id="seek" type="range" min="0" max="1" step="0.1" value="0" aria-label="Seek">
+      </div>
+      <span id="t-end" class="time muted">0:00</span>
+      <div class="menu-wrap">
+        <button class="chip" id="btn-layout" type="button" aria-haspopup="menu" aria-expanded="false" title="Video layout"><svg aria-hidden="true"><use href="#i-sphere"/></svg><span id="layout-label">180° 3D</span></button>
+        <div id="layout-menu" class="menu hud" role="menu" hidden></div>
+      </div>
+      <button class="icon ipad-only" id="btn-motion" type="button" aria-pressed="false" aria-label="Look around by moving the iPad" title="Motion" hidden><svg><use href="#i-motion"/></svg></button>
+      <button class="icon" id="btn-recenter" type="button" aria-label="Recenter view" title="Recenter (R)"><svg><use href="#i-recenter"/></svg></button>
+      <button class="icon" id="btn-mute" type="button" aria-label="Mute" title="Mute (M)"><svg><use href="#i-sound"/></svg></button>
+      <button class="icon" id="btn-full" type="button" aria-label="Full screen" title="Full screen (F)"><svg><use href="#i-full"/></svg></button>
+    </div>
+    <p id="opt-status" class="opt-status muted" hidden></p>
+  </div>
+
+  <div id="keys" class="keys hud" role="dialog" aria-label="Keyboard shortcuts" hidden>
+    <dl>
+      <dt>Double-click</dt><dd>Show / hide controls</dd>
+      <dt>Space</dt><dd>Play / pause</dd>
+      <dt>← →</dt><dd>Back / forward 10 s</dd>
+      <dt>J L</dt><dd>Back / forward 30 s</dd>
+      <dt>W A S D</dt><dd>Look around</dd>
+      <dt>R</dt><dd>Recenter</dd>
+      <dt>M</dt><dd>Mute</dd>
+      <dt>F</dt><dd>Full screen</dd>
+      <dt>Esc</dt><dd>Leave full screen, then library</dd>
+    </dl>
+  </div>
+</section>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
